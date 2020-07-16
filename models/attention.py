@@ -15,12 +15,17 @@ class memory_attention(nn.Module):
         # x (batch, hidden); context (batch, seq_len, hidden)
         h_x = torch.unsqueeze(self.w_q(x), 1)
         h_c = self.w_m(memory)
-        score = torch.squeeze(self.v(self.tanh(h_x + h_c)), 2)
-        # score = score.masked_fill_((1-mask.byte()), 1e-6)
-        score = self.softmax(score)
-        c = torch.sum(memory * torch.unsqueeze(score, -1), 1)
-        return c, score
-
+        #score = torch.squeeze(self.v(self.tanh(h_x + h_c)), 2)
+        self.linear_tanh = self.v(self.tanh(h_x + h_c))  
+        score = torch.squeeze(self.linear_tanh) #the dimontionality is broken
+        
+        #score = score.masked_fill_((1-mask.byte()), 1e-6)
+        self.score = self.softmax(score)
+        #c = torch.sum(memory * torch.unsqueeze(score,1))
+        return self.score # for now, returning just score
+    def insideForward(self):
+        tensor = torch.Tensor(self.linear_tanh * self.score)
+        return tensor
 
 class global_attention(nn.Module):
 
